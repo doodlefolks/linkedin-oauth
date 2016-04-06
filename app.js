@@ -22,10 +22,19 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(passport.initialize());
+
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+  done(null, user)
+});
 passport.use(new LinkedInStrategy({
-  clientID: process.env.LINKEDIN_KEY,
-  clientSecret: process.env.LINKEDIN_SECRET,
-  callbackURL: "http://127.0.0.1:3000/auth/linkedin/callback",
+  clientID: process.env.LINKEDIN_CLIENT_ID,
+  clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+  callbackURL: "http://localhost:3000/auth/linkedin/callback",
   scope: ['r_emailaddress', 'r_basicprofile'],
 }, function(accessToken, refreshToken, profile, done) {
   // asynchronous verification, for effect...
@@ -40,6 +49,12 @@ passport.use(new LinkedInStrategy({
 
 app.use('/', routes);
 app.use('/users', users);
+
+app.get('/auth/linkedin', passport.authenticate('linkedin', { state: 'ss'  }));
+app.get('/auth/linkedin/callback', passport.authenticate('linkedin', {
+  successRedirect: '/',
+  failureRedirect: '/login'
+}));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
